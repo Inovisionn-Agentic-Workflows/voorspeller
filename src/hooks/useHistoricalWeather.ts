@@ -36,9 +36,11 @@ export function useImportHistoricalWeather() {
     mutationFn: async (range?: { start: string; end: string }) => {
       if (!activeLocation) throw new Error('Geen actieve locatie')
 
+      const lat = activeLocation.latitude
+      const lon = activeLocation.longitude
       const weatherData = range
-        ? await fetchHistoricalWeather(activeLocation.id, range.start, range.end)
-        : await fetchLastTwoSeasons(activeLocation.id)
+        ? await fetchHistoricalWeather(activeLocation.id, range.start, range.end, lat, lon)
+        : await fetchLastTwoSeasons(activeLocation.id, lat, lon)
 
       // Batch upsert in stukken van 500 — geen id meesturen, Supabase genereert die
       const batchSize = 500

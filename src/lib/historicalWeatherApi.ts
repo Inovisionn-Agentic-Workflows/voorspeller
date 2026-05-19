@@ -1,7 +1,7 @@
 import type { WeatherCache } from '@/types'
 
-const ROERMOND_LAT = 51.1944
-const ROERMOND_LON = 5.9877
+const DEFAULT_LAT = 51.1944
+const DEFAULT_LON = 5.9877
 
 interface OpenMeteoDay {
   time: string
@@ -73,11 +73,13 @@ function buildRow(day: OpenMeteoDay, locationId: string): Omit<WeatherCache, 'id
 export async function fetchHistoricalWeather(
   locationId: string,
   startDate: string,
-  endDate: string
+  endDate: string,
+  lat = DEFAULT_LAT,
+  lon = DEFAULT_LON,
 ): Promise<Omit<WeatherCache, 'id'>[]> {
   const params = new URLSearchParams({
-    latitude: String(ROERMOND_LAT),
-    longitude: String(ROERMOND_LON),
+    latitude: String(lat),
+    longitude: String(lon),
     start_date: startDate,
     end_date: endDate,
     daily: [
@@ -121,16 +123,19 @@ export async function fetchHistoricalWeather(
   return days.map(d => buildRow(d, locationId))
 }
 
-export async function fetchLastTwoSeasons(locationId: string): Promise<Omit<WeatherCache, 'id'>[]> {
+export async function fetchLastTwoSeasons(
+  locationId: string,
+  lat = DEFAULT_LAT,
+  lon = DEFAULT_LON,
+): Promise<Omit<WeatherCache, 'id'>[]> {
   const today = new Date()
   const twoYearsAgo = new Date(today)
   twoYearsAgo.setFullYear(today.getFullYear() - 2)
 
   const start = twoYearsAgo.toISOString().split('T')[0]
-  // Open-Meteo archive gaat tot gisteren
   const yesterday = new Date(today)
   yesterday.setDate(today.getDate() - 1)
   const end = yesterday.toISOString().split('T')[0]
 
-  return fetchHistoricalWeather(locationId, start, end)
+  return fetchHistoricalWeather(locationId, start, end, lat, lon)
 }

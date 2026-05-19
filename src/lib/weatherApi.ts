@@ -1,8 +1,7 @@
 import type { WeatherCache } from '@/types'
 
-// Roermond coördinaten
-const ROERMOND_LAT = 51.1944
-const ROERMOND_LON = 5.9877
+const DEFAULT_LAT = 51.1944 // Roermond fallback
+const DEFAULT_LON = 5.9877
 
 const API_KEY = import.meta.env.VITE_OPEN_WEATHER as string
 
@@ -57,15 +56,18 @@ function estimateSunHours(cloudPct: number, month: number): number {
   return Math.round(maxSunHours * (1 - cloudPct / 100) * 10) / 10
 }
 
-export async function fetchWeatherForecast(locationId: string): Promise<WeatherCache[]> {
+export async function fetchWeatherForecast(
+  locationId: string,
+  lat = DEFAULT_LAT,
+  lon = DEFAULT_LON,
+): Promise<WeatherCache[]> {
   if (!API_KEY) throw new Error('OpenWeather API key ontbreekt')
 
-  const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${ROERMOND_LAT}&lon=${ROERMOND_LON}&exclude=minutely,hourly,alerts&units=metric&appid=${API_KEY}`
+  const url = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,alerts&units=metric&appid=${API_KEY}`
 
   const res = await fetch(url)
   if (!res.ok) {
-    // Fallback naar gratis 5-daagse forecast endpoint
-    return fetchWeatherForecastFree(locationId)
+    return fetchWeatherForecastFree(locationId, lat, lon)
   }
   const data: OWMOneCallResponse = await res.json()
 
@@ -94,9 +96,12 @@ export async function fetchWeatherForecast(locationId: string): Promise<WeatherC
   })
 }
 
-// Gratis fallback: 5-daagse forecast (3-uurlijks → dagelijks aggregeren)
-async function fetchWeatherForecastFree(locationId: string): Promise<WeatherCache[]> {
-  const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${ROERMOND_LAT}&lon=${ROERMOND_LON}&units=metric&appid=${API_KEY}`
+async function fetchWeatherForecastFree(
+  locationId: string,
+  lat = DEFAULT_LAT,
+  lon = DEFAULT_LON,
+): Promise<WeatherCache[]> {
+  const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`
 
   const res = await fetch(url)
   if (!res.ok) throw new Error(`OpenWeather fout: ${res.status}`)

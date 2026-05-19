@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query'
 import { fetchWeatherForecast, saveWeatherToSupabase } from '@/lib/weatherApi'
 import { supabase } from '@/lib/supabase'
 import { useLocationStore } from '@/stores/locationStore'
-import { demoWeather } from '@/lib/demoData'
 
 export function useWeatherSync() {
   const { activeLocation } = useLocationStore()
@@ -10,13 +9,16 @@ export function useWeatherSync() {
   return useQuery({
     queryKey: ['weather_sync', activeLocation?.id],
     queryFn: async () => {
-      if (!activeLocation) return demoWeather
-
-      const weather = await fetchWeatherForecast(activeLocation.id)
+      if (!activeLocation) return []
+      const weather = await fetchWeatherForecast(
+        activeLocation.id,
+        activeLocation.latitude,
+        activeLocation.longitude,
+      )
       await saveWeatherToSupabase(weather, supabase)
       return weather
     },
-    staleTime: 1000 * 60 * 60, // Eén uur cachen
+    staleTime: 1000 * 60 * 60,
     enabled: !!activeLocation,
   })
 }
