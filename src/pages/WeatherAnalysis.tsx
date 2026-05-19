@@ -7,8 +7,8 @@ import { Cloud, Download, Loader2, CheckCircle } from 'lucide-react'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { ScoreRing } from '@/components/ui/ScoreRing'
 import { Badge } from '@/components/ui/Badge'
-import { demoWeather, demoForecasts, demoDailySales } from '@/lib/demoData'
-import { useWeatherSync } from '@/hooks/useWeatherSync'
+import { demoForecasts, demoDailySales } from '@/lib/demoData'
+import { useWeather } from '@/hooks/useWeather'
 import { useImportHistoricalWeather, useWeatherSalesCorrelation, useHistoricalWeatherFromDB } from '@/hooks/useHistoricalWeather'
 import { format, subMonths } from 'date-fns'
 import { formatDateNl, formatCurrency, windDirectionLabel } from '@/lib/utils'
@@ -22,19 +22,27 @@ export default function WeatherAnalysis() {
     end: fmt(new Date()),
   })
 
-  const { data: liveWeather } = useWeatherSync()
+  const { data: weather = [] } = useWeather(14)
   const importMutation = useImportHistoricalWeather()
 
   const { data: historicalWeather = [] } = useHistoricalWeatherFromDB(importRange.start, importRange.end)
   const { data: correlationData = [] } = useWeatherSalesCorrelation(importRange.start, importRange.end)
-
-  // Gebruik live weer als beschikbaar, anders demo
-  const weather = (liveWeather && liveWeather.length > 0) ? liveWeather : demoWeather
   const forecasts = demoForecasts
   const dailySales = demoDailySales
 
   const todayWeather = weather[0]
   const todayFc = forecasts[0]
+
+  if (!todayWeather || !todayFc) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-[#f9fafb]">Weer Analyse</h1>
+          <p className="text-sm text-[#9ca3af] mt-1">Weerdata ophalen van OpenWeatherMap...</p>
+        </div>
+      </div>
+    )
+  }
 
   const weatherByDate = Object.fromEntries(weather.map(w => [w.date, w]))
   const forecastScores = forecasts.map(fc => {
