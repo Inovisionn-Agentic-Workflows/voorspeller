@@ -20,7 +20,7 @@ export default function Dashboard() {
   const { data: dailySales = [] } = useDailySales(60)
   const { data: hourlySales = [] } = useHourlySales(yesterday)
   const { data: forecasts = [] } = useForecasts(14)
-  const { data: weather = [] } = useWeather(14)
+  const { data: weather = [], isLoading: weatherLoading } = useWeather(14)
   const { data: insights = [] } = useAIInsights()
 
   const todayFc = forecasts[0]
@@ -28,7 +28,7 @@ export default function Dashboard() {
   const yesterdaySales = dailySales[dailySales.length - 1]
   const prevWeekSameDay = dailySales[dailySales.length - 8]
 
-  if (!todayFc || !todayWeather || !yesterdaySales) {
+  if (!todayFc || !yesterdaySales) {
     return (
       <div className="space-y-6">
         <div>
@@ -104,7 +104,13 @@ export default function Dashboard() {
             <ScoreRing score={todayFc.outdoor_seating_potential} label="Buitenterras" sublabel="potentieel" />
           </div>
         </Card>
-        <WeatherWidget weather={todayWeather} label="Vandaag" />
+        {weatherLoading || !todayWeather ? (
+          <div className="rounded-2xl bg-[#111827] border border-[#1f2937] shadow-xl p-6 flex items-center justify-center">
+            <p className="text-sm text-[#9ca3af]">Weerdata ophalen...</p>
+          </div>
+        ) : (
+          <WeatherWidget weather={todayWeather} label="Vandaag" />
+        )}
       </div>
 
       <RevenueChart data={dailySales} />
